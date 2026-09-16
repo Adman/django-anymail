@@ -316,11 +316,11 @@ class SendGridBackendStandardEmailTests(SendGridBackendMockAPITestCase):
         self.assertEqual(data["headers"], {"X-Extra": "Další"})
 
     def test_attachments(self):
-        # SendGrid does not have a way to specify charset for text attachments
-        # (it strips any charset included in the `type` API field). It either
-        # doesn't include charset in the Content-Type or incorrectly adds
-        # `charset=iso-8859-1` under unknown conditions (issue #150).
-        # Just force utf-8 and hope for the best.
+        # SendGrid does not have a way to specify charset for text attachments.
+        # It sometimes rejects a charset param (or almost anything else containing
+        # ';') in the `type`. And it either doesn't include charset in the
+        # Content-Type or incorrectly adds `charset=iso-8859-1` under unknown
+        # conditions. (Issues #150 and #492.) Force utf-8 and hope for the best.
         # SendGrid accepts non-ASCII filenames and incorrectly sends them as
         # 8-bit utf-8. The filename param is required but can be empty.
         text_content = "pièce jointe\n"
@@ -337,7 +337,9 @@ class SendGridBackendStandardEmailTests(SendGridBackendMockAPITestCase):
         self.assertEqual(len(attachments), 3)
 
         # Use utf-8 encoding for text, regardless of original charset.
-        self.assertEqual(attachments[0]["type"], 'text/plain; charset="utf-8"')
+        # (But don't include charset in `type`, which sometimes causes API errors.)
+        self.assertEqual(attachments[0]["type"], "text/plain")
+        self.assertNotIn(";", attachments[0]["type"])  # See #492.
         self.assertEqual(attachments[0]["filename"], "")  # no filename
         self.assertEqual(
             decode_att(attachments[0]["content"]).decode("utf-8"), text_content

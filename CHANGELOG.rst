@@ -41,6 +41,23 @@ Fixes
   and deploy your project, and then edit your webhook in MailerSend's dashboard
   to change to version 2.0.
 
+* **SendGrid:** Fix an API error affecting some users that "The attachment type
+  cannot contain ';'" when sending text attachments. To avoid this, Anymail no
+  longer includes the text charset in the attachment's type. This partially
+  reverts a change introduced in Anymail 14.0 that was meant to improve handling
+  of Unicode attachment content.
+
+  Text attachments are still passed to SendGrid's API with utf-8 encoding. Because
+  SendGrid may not identify the charset correctly in the sent message, some
+  recipients may see garbled text or errors in their email client. Trying to send
+  non-ASCII text attachment content with SendGrid is not recommended. More info
+  and workarounds in the
+  `docs <https://anymail.dev/en/latest/esps/sendgrid/#sendgrid-garbled-text-attachments>`_.
+
+  (Thanks to `@Adman`_ for the report and fix. As a reminder, SendGrid is no
+  longer tested. Although Anymail's maintainers have reviewed the fix, it has not
+  been independently verified against the live API.)
+
 
 v15.2
 -----
@@ -2054,6 +2071,7 @@ Features
 .. _#153: https://github.com/anymail/django-anymail/issues/153
 .. _#304: https://github.com/anymail/django-anymail/issues/304
 
+.. _@Adman: https://github.com/Adman
 .. _@ailionx: https://github.com/ailionx
 .. _@alee: https://github.com/alee
 .. _@andresmrm: https://github.com/andresmrm

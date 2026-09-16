@@ -281,20 +281,34 @@ Limitations and quirks
 
   (Tested March, 2016)
 
-**Non-ASCII text attachments may be garbled**
-  SendGrid's API ignores the character set used for text attachment content.
-  It either strips the ``charset`` parameter from the :mailheader:`Content-Type`
-  attachment header or arbitrarily changes it to ``charset="iso-8859-1"``,
-  even when some other charset is specified. This will display incorrectly or
-  cause errors in many email clients.
+.. _sendgrid-garbled-text-attachments:
 
-  The behavior is unpredictable and may vary by SendGrid account or change over
-  time. It has been reported to SendGrid repeatedly. You may be able to counteract
-  the issue by enabling open and/or click tracking in your SendGrid account. The
-  only way to completely avoid the problem is switching to a non-text attachment
-  type (e.g., application/pdf) or limiting your text attachments to use only
-  ASCII characters. See `issue 150 <https://github.com/anymail/django-anymail/issues/150>`_
-  for more information and other possible workarounds.
+**Non-ASCII text attachments are likely to be garbled**
+  SendGrid's API does not reliably support sending text attachments with
+  non-ASCII characters in the content. For text attachment types (text and CSV
+  files, vcalendar events, etc.), Unicode characters are likely to end up garbled
+  ("mojibake") or cause errors for some recipients, depending on their email
+  service and client app.
+
+  SendGrid's behavior in this area is unpredictable. Customers have reported text
+  attachments sent with no ``charset`` parameter or with a forced
+  ``charset="iso-8859-1"``, regardless of the actual encoding used for the text.
+  The results seem to vary between customers and over time. (The exact behavior
+  may depend on which SendGrid API server processes a given send request.)
+  Customers have reported the problem to SendGrid repeatedly. Anymail has
+  attempted several workarounds, none of which worked consistently.
+
+  The only way to completely avoid the problem is switching to a non-text
+  attachment type (e.g., application/pdf) or limiting your text attachments to
+  use only ASCII characters. Another option is switching to Django's built-in
+  SMTP EmailBackend with SendGrid's SMTP relay endpoint.
+
+  .. versionchanged:: vNext
+
+      Anymail no longer includes the ``charset`` parameter in the SendGrid API's
+      attachment type, as some customers reported it caused API errors. (Anymail
+      still uses utf-8 encoding for SendGrid text attachment content, on the theory
+      that this is more likely to display correctly in newer email clients.)
 
   .. versionchanged:: 14.0
 
